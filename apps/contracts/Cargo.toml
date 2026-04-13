@@ -1,0 +1,23 @@
+[workspace]
+members = [
+    "energy_token",
+    "energy_distribution",
+    "community_governance",
+]
+resolver = "2"
+
+[workspace.dependencies]
+soroban-sdk = { version = "23.1.0", features = ["testutils"] }
+stellar-pausable = { version = "0.5.1", git = "https://github.com/OpenZeppelin/stellar-contracts" }
+stellar-upgradeable = { version = "0.5.1", git = "https://github.com/OpenZeppelin/stellar-contracts" }
+stellar-fungible = { version = "0.5.1", git = "https://github.com/OpenZeppelin/stellar-contracts" }
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true

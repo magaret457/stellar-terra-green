@@ -1,0 +1,64 @@
+name: Deploy Contracts to Testnet
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: Target network
+        required: true
+        default: testnet
+        type: choice
+        options: [testnet, mainnet]
+
+jobs:
+  deploy:
+    name: Deploy Soroban Contracts
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.network }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/contracts
+
+      - name: Install Stellar CLI
+        run: cargo install --locked stellar-cli --features opt
+
+      - name: Build contracts
+        working-directory: apps/contracts
+        run: stellar contract build
+
+      - name: Deploy energy_token
+        working-directory: apps/contracts
+        env:
+          STELLAR_SECRET_KEY: ${{ secrets.STELLAR_DEPLOY_SECRET_KEY }}
+        run: |
+          stellar contract deploy \
+            --wasm target/wasm32-unknown-unknown/release/energy_token.wasm \
+            --source "$STELLAR_SECRET_KEY" \
+            --network ${{ inputs.network }}
+
+      - name: Deploy energy_distribution
+        working-directory: apps/contracts
+        env:
+          STELLAR_SECRET_KEY: ${{ secrets.STELLAR_DEPLOY_SECRET_KEY }}
+        run: |
+          stellar contract deploy \
+            --wasm target/wasm32-unknown-unknown/release/energy_distribution.wasm \
+            --source "$STELLAR_SECRET_KEY" \
+            --network ${{ inputs.network }}
+
+      - name: Deploy community_governance
+        working-directory: apps/contracts
+        env:
+          STELLAR_SECRET_KEY: ${{ secrets.STELLAR_DEPLOY_SECRET_KEY }}
+        run: |
+          stellar contract deploy \
+            --wasm target/wasm32-unknown-unknown/release/community_governance.wasm \
+            --source "$STELLAR_SECRET_KEY" \
+            --network ${{ inputs.network }}
